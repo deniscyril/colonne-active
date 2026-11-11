@@ -134,7 +134,8 @@ Un tableau récapitulatif des trois séances (exercice, dose, avis du kiné) ser
   - trois éléments `<audio>` autorisés pour jouer plus tard les bips de secours.
 - **Bips de secours** : si iOS suspend le contexte Web Audio (annonce vocale, notification, veille), le bip est joué par un élément `<audio>` (son pré-calculé en WAV).
 - **Bandeau** dans le lecteur quand Web Audio est suspendu ou que la boucle muette reste arrêtée plus de 2,5 s hors annonce (cas du mode silencieux) : « touche ici pour le rétablir ». Tout toucher pendant la séance relance le son.
-- **Voix** : court délai après l'interruption d'une annonce (Safari iOS perd sinon la nouvelle annonce), références gardées sur les annonces en cours, reprise si la synthèse est en pause, voix française choisie.
+- **Voix enregistrée** : les 99 phrases de l'app (noms d'exercices, côtés, « Série 1 » à 6, « Série bonus », nombres 1 à 30, « Maintien 1 » à 12, « Repos », « C'est parti ») sont enregistrées avec la voix française « Thomas » de macOS (MP3 22 kHz, `outils/generer_voix.py`) et jouées par Web Audio, comme les bips. Sur iPhone, la synthèse vocale du navigateur interrompt tout le son de la page et, en mode silencieux, les bips ne reviennent pas : les enregistrements évitent ce problème. Une annonce composée (« Série 2, Côté gauche ») enchaîne deux enregistrements. La synthèse vocale ne sert plus que pour une phrase non enregistrée.
+- **Synthèse vocale (secours)** : court délai après l'interruption d'une annonce (Safari iOS perd sinon la nouvelle annonce), références gardées sur les annonces en cours, reprise si la synthèse est en pause, voix française choisie.
 - **Relance après la voix** : sur iPhone, une annonce vocale interrompt tout le son de la page (Web Audio « interrupted », boucle muette en pause). Après chaque annonce, et à chaque changement d'état du son, l'app relance Web Audio et la boucle muette, et note le résultat dans le journal.
 - **Bip puis voix** : une annonce attend la fin du bip qui l'accompagne (+ 150 ms), car iOS baisse ou coupe les autres sons quand la voix démarre. Bips d'au moins 130 ms, plus forts.
 - **Écran allumé** : API Wake Lock ; à défaut, vidéo muette en boucle.
@@ -282,3 +283,4 @@ Des médailles dessinées en SVG, dans l'esprit des récompenses d'activité de 
 11. Bips couverts par la voix sur iPhone : la voix attend la fin du bip ; bips plus longs et plus forts ; journal du son complet.
 12. Journal iPhone : la voix interrompt Web Audio et la boucle muette ; relance automatique après chaque annonce.
 13. iPhone en mode silencieux confirmé : bandeau « Son coupé par l'iPhone (mode silencieux ?) » quand la relance automatique échoue.
+14. Bips toujours coupés en mode silencieux après chaque annonce : voix enregistrée jouée par Web Audio à la place de la synthèse vocale.
