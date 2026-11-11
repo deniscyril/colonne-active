@@ -397,7 +397,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
           <button class="icon-btn" id="pNext" aria-label="Étape suivante">▶</button>
         </div>
         <div class="p-ctrl" id="pExtra"></div>
-        <button class="notice" id="pSnd" hidden style="border:0;cursor:pointer;font:inherit;text-align:center">Son suspendu par l'iPhone : touche ici pour le rétablir</button>
+        <button class="notice" id="pSnd" hidden style="border:0;cursor:pointer;font:inherit;text-align:center">Son coupé par l'iPhone (mode silencieux ?) : touche ici pour le rétablir</button>
       </div>
       <div class="p-side">
         <div class="card cues" id="pCues"></div>
@@ -1541,7 +1541,7 @@ function renderSettings() {
         <div class="field"><label class="check"><input type="checkbox" id="setSons" ${S.sons ? "checked" : ""}><span><b>Signaux sonores</b><br><span class="muted" style="font-size:.88rem">Bips pendant les 3 dernières secondes et au changement de phase.</span></span></label>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px"><button class="btn sm" id="testSon">Tester le son et la voix</button><button class="btn sm" id="testSeq">Tester un enchaînement de séance (16 s)</button></div>
           <details style="margin-top:8px"><summary class="muted" style="font-size:.85rem;cursor:pointer">Journal du son (diagnostic)</summary><pre id="audioLog" style="font-size:.72rem;white-space:pre-wrap;background:var(--surface-2);padding:8px;border-radius:8px;margin-top:6px;max-height:360px;overflow:auto">${ALOG.join("\n") || "Vide : lance un test ou une séance."}</pre></details>
-          <p class="muted" style="font-size:.82rem;margin-top:6px">Sur iPhone : monte le volume avec les boutons latéraux pendant le test (c'est le volume « multimédia » qui compte, pas celui de la sonnerie). Si tu n'entends toujours rien, désactive le mode silencieux.</p></div>
+          <p class="muted" style="font-size:.82rem;margin-top:6px">Sur iPhone : monte le volume avec les boutons latéraux pendant le test (c'est le volume « multimédia » qui compte, pas celui de la sonnerie). En mode silencieux, l'iPhone coupe les bips après chaque annonce vocale : l'app tente de les rétablir, et sinon un bandeau te demande de toucher l'écran. Le plus sûr : désactiver le mode silencieux pendant la séance, ou décocher les annonces vocales.</p></div>
         <div class="field"><label class="check"><input type="checkbox" id="setRythme" ${S.rythme ? "checked" : ""}><span><b>Rythme guidé pour les répétitions</b><br><span class="muted" style="font-size:.88rem">Chaque répétition est chronométrée : bip aigu au début, bip grave à mi-parcours pour repartir dans l'autre sens, puis passage automatique à la suite. Décoche pour compter toi-même.</span></span></label></div>
         <div class="field"><label class="check"><input type="checkbox" id="setVoix" ${S.voix ? "checked" : ""}><span><b>Annonces vocales</b><br><span class="muted" style="font-size:.88rem">Une voix annonce l'exercice, la série, le côté et compte les répétitions et les maintiens. Utilise la voix française de ton appareil.</span></span></label></div>
         <div class="field"><h3>Matériel disponible</h3><p class="muted" style="font-size:.88rem">Le programme utilise tes deux élastiques (très souple et moyen), l'Elastiband 10 kg (positions 1 à 6 : vérifie sur la notice laquelle est la plus souple), les haltères de 2 kg et le kit Blackroll. Décoche ce qui n'est pas disponible là où tu t'entraînes : l'exercice concerné affichera une variante.</p>
@@ -1729,6 +1729,7 @@ function beep(f = 880, d = .12, force = false) {
 let frVoice = null;
 function pickVoice() { try { const vs = speechSynthesis.getVoices(); frVoice = vs.find(v => /^fr[-_]FR/i.test(v.lang) && v.localService) || vs.find(v => /^fr/i.test(v.lang)) || null; } catch (e) {} }
 if ("speechSynthesis" in window) { pickVoice(); try { speechSynthesis.addEventListener("voiceschanged", pickVoice); } catch (e) {} }
+let lastSayAt = 0;
 const utt = new Set(); // garder une référence : sinon Safari peut abandonner l'annonce en cours
 function say(t, force = false) {
   if ((!Store.settings.voix && !force) || !t || !("speechSynthesis" in window)) return;
@@ -1737,7 +1738,7 @@ function say(t, force = false) {
     u.onstart = () => alog(`voix : début « ${t} »`);
     u.onend = () => { utt.delete(u); alog(`voix : fin « ${t} »`); setTimeout(() => reviveAudio("fin de voix"), 50); };
     u.onerror = ev => { utt.delete(u); alog(`voix : ${ev.error === "canceled" || ev.error === "interrupted" ? "coupée" : "erreur " + (ev.error || "")} « ${t} »`); setTimeout(() => reviveAudio("voix coupée"), 50); };
-    utt.add(u);
+    utt.add(u); lastSayAt = Date.now();
     if (speechSynthesis.paused) speechSynthesis.resume();
     // Safari iOS perd souvent une annonce lancée juste après cancel() : on laisse un court délai.
     const busy = (speechSynthesis.speaking || speechSynthesis.pending);
@@ -1853,7 +1854,15 @@ function tick() {
   renderClock();
 }
 setInterval(tick, 100);
-setInterval(() => { const b = document.getElementById("pSnd"); if (!b) return; const off = !!(P && Store.settings.sons && audio && audio.state !== "running" && !$("#pRun").hidden); if (b.hidden === off) { b.hidden = !off; if (off) alog("bandeau son suspendu affiché"); } }, 1000);
+let loopOffSince = 0;
+setInterval(() => {
+  const b = document.getElementById("pSnd"); if (!b) return;
+  const live = !!(P && Store.settings.sons && !$("#pRun").hidden);
+  const loopOff = live && silentEl && silentEl.paused && Date.now() - lastSayAt > 3000; // pas pendant une annonce
+  loopOffSince = loopOff ? (loopOffSince || Date.now()) : 0;
+  const off = live && ((audio && audio.state !== "running") || (loopOffSince && Date.now() - loopOffSince > 2500));
+  if (b.hidden === !!off) { b.hidden = !off; if (off) alog("bandeau son coupé affiché"); }
+}, 1000);
 
 function stepTags(st) {
   const tags = [];
