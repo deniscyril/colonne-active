@@ -126,6 +126,13 @@ Un tableau récapitulatif des trois séances (exercice, dose, avis du kiné) ser
 - **Commandes** : pause, étape précédente, étape suivante, +15 s, « je suis prêt », quitter (avec enregistrement possible).
 - **En fin de séance** : douleur, **effort perçu en 5 emoji**, notes, puis enregistrement.
 
+### 5.1 Son sur iPhone
+
+- Le son est déverrouillé au toucher de « Commencer » : session audio en mode « lecture » (API `navigator.audioSession`, Safari 17+) et fichier muet joué en boucle pendant la séance, pour que l'interrupteur silencieux ne coupe pas les bips.
+- La voix attend un court délai après l'interruption d'une annonce (Safari iOS perd sinon la nouvelle annonce) ; voix française choisie quand la liste des voix est disponible.
+- Le son est réveillé au retour de veille et au premier toucher.
+- Réglages : bouton « Tester le son et la voix » (trois bips puis une phrase), avec un rappel sur le volume multimédia et le mode silencieux.
+
 ## 6. Suivi
 
 - **Saisie rapide** d'une activité (courte, longue, natation, course) : date, durée, distance, douleur après, effort, notes.
@@ -260,3 +267,4 @@ Des médailles dessinées en SVG, dans l'esprit des récompenses d'activité de 
 6. Repères sonores : rythme guidé des répétitions et annonces vocales.
 7. Dépôt GitHub avec GitHub Pages, cahier des charges, effort en 5 emoji, valeurs par défaut de la natation (60 min, 1300 m), séries et badges, assiduité natation.
 8. Natation suspendue pendant les petites vacances scolaires de la zone B ; badges redessinés en médailles (style récompenses Apple Watch).
+9. Son inaudible sur iPhone : déverrouillage audio pour iOS et bouton de test du son.
