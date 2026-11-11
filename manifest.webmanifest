@@ -1,0 +1,16 @@
+{
+  "name": "Colonne Active",
+  "short_name": "Colonne Active",
+  "description": "Séances guidées de renforcement profond du dos, mobilité, tendons et fascias, avec suivi.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F4F8F8",
+  "theme_color": "#0E6873",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
