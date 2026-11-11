@@ -411,6 +411,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
           <button class="icon-btn" id="pNext" aria-label="Étape suivante">▶</button>
         </div>
         <div class="p-ctrl" id="pExtra"></div>
+        <button class="notice" id="pSnd" hidden style="border:0;cursor:pointer;font:inherit;text-align:center">Son suspendu par l'iPhone : touche ici pour le rétablir</button>
       </div>
       <div class="p-side">
         <div class="card cues" id="pCues"></div>
@@ -1552,7 +1553,8 @@ function renderSettings() {
         <div class="field"><label class="check"><input type="checkbox" id="setAsym" ${S.asym ? "checked" : ""} ${S.convexe ? "" : "disabled"}><span><b>Planche latérale asymétrique</b><br><span class="muted" style="font-size:.88rem">Ajoute une série avec la convexité lombaire vers le sol. À activer seulement après l'avis de ton kiné.</span></span></label></div>
         <div class="field"><h3>Préparation avant chaque exercice</h3>${seg("prep", S.prep, [[5,"5 s"],[10,"10 s"],[15,"15 s"],[20,"20 s"]])}</div>
         <div class="field"><label class="check"><input type="checkbox" id="setSons" ${S.sons ? "checked" : ""}><span><b>Signaux sonores</b><br><span class="muted" style="font-size:.88rem">Bips pendant les 3 dernières secondes et au changement de phase.</span></span></label>
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px"><button class="btn sm" id="testSon">Tester le son et la voix</button><span class="muted" style="font-size:.82rem">Trois bips puis « Le son fonctionne ».</span></div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px"><button class="btn sm" id="testSon">Tester le son et la voix</button><button class="btn sm" id="testSeq">Tester un enchaînement de séance (16 s)</button></div>
+          <details style="margin-top:8px"><summary class="muted" style="font-size:.85rem;cursor:pointer">Journal du son (diagnostic)</summary><pre id="audioLog" style="font-size:.72rem;white-space:pre-wrap;background:var(--surface-2);padding:8px;border-radius:8px;margin-top:6px;max-height:260px;overflow:auto">${ALOG.slice(-14).join("\n") || "Vide : lance un test ou une séance."}</pre></details>
           <p class="muted" style="font-size:.82rem;margin-top:6px">Sur iPhone : monte le volume avec les boutons latéraux pendant le test (c'est le volume « multimédia » qui compte, pas celui de la sonnerie). Si tu n'entends toujours rien, désactive le mode silencieux.</p></div>
         <div class="field"><label class="check"><input type="checkbox" id="setRythme" ${S.rythme ? "checked" : ""}><span><b>Rythme guidé pour les répétitions</b><br><span class="muted" style="font-size:.88rem">Chaque répétition est chronométrée : bip aigu au début, bip grave à mi-parcours pour repartir dans l'autre sens, puis passage automatique à la suite. Décoche pour compter toi-même.</span></span></label></div>
         <div class="field"><label class="check"><input type="checkbox" id="setVoix" ${S.voix ? "checked" : ""}><span><b>Annonces vocales</b><br><span class="muted" style="font-size:.88rem">Une voix annonce l'exercice, la série, le côté et compte les répétitions et les maintiens. Utilise la voix française de ton appareil.</span></span></label></div>
@@ -1574,6 +1576,7 @@ document.addEventListener("click", ev => {
   const t = ev.target.closest("button, a"); if (!t) return;
   if (t.id === "mpClose") closeBadges();
   else if (t.id === "testSon") testSound();
+  else if (t.id === "testSeq") { testSequence(); const d = t.closest(".field").querySelector("details"); if (d) d.open = true; }
   else if (t.dataset.badge) showBadges([t.dataset.badge]);
   else if (t.dataset.start) openPlayer(t.dataset.start);
   else if (t.dataset.log) openLog(t.dataset.log);
@@ -1663,60 +1666,114 @@ $("#logForm").addEventListener("submit", async e => {
 /* ------------------------------------------------------------------ */
 let P = null, audio = null, wake = null;
 const C = 628.3;
-// iPhone : l'interrupteur « silencieux » coupe le son Web Audio. On passe la session audio en mode
-// « lecture » (API audioSession, Safari 17+) et on joue en boucle un fichier muet : iOS traite alors
-// la page comme un lecteur multimédia, et les bips passent même en mode silencieux.
-let silentEl = null;
-function silentWav() {
-  const n = 2000, b = new Uint8Array(44 + n * 2), v = new DataView(b.buffer);
+// Son sur iPhone. Trois précautions :
+// 1. session audio en mode « lecture » + fichier muet en boucle : l'interrupteur silencieux ne coupe pas les bips ;
+// 2. si iOS suspend le contexte Web Audio (annonce vocale, notification, veille), le bip passe par un
+//    élément <audio> déjà autorisé pendant le toucher de « Commencer » ;
+// 3. un journal (ALOG) garde les derniers événements sonores pour le diagnostic.
+let silentEl = null, sleepVid = null, toneK = 0;
+const toneEls = [];
+const ALOG = [];
+function alog(m) {
+  const t = new Date(); ALOG.push(`${String(t.getMinutes()).padStart(2, "0")}:${String(t.getSeconds()).padStart(2, "0")}.${String(Math.floor(t.getMilliseconds() / 100))} ${m}`);
+  if (ALOG.length > 60) ALOG.shift();
+  const box = document.getElementById("audioLog"); if (box) { box.textContent = ALOG.slice(-14).join("\n"); }
+}
+function wav(samples, sr = 22050) {
+  const n = samples.length, b = new Uint8Array(44 + n * 2), v = new DataView(b.buffer);
   const w = (o, t) => [...t].forEach((c, i) => b[o + i] = c.charCodeAt(0));
   w(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); w(8, "WAVE"); w(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
-  v.setUint32(24, 8000, true); v.setUint32(28, 16000, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, "data"); v.setUint32(40, n * 2, true);
-  let bin = ""; b.forEach(x => bin += String.fromCharCode(x)); return "data:audio/wav;base64," + btoa(bin);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, "data"); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, samples[i])) * 32767, true);
+  let bin = ""; for (let i = 0; i < b.length; i += 8192) bin += String.fromCharCode.apply(null, b.subarray(i, i + 8192));
+  return "data:audio/wav;base64," + btoa(bin);
 }
+const silentWav = () => wav(new Float32Array(4000), 8000);
+const toneCache = {};
+function toneWav(f, d) {
+  const k = f + ":" + d; if (toneCache[k]) return toneCache[k];
+  const sr = 22050, n = Math.round(sr * (d + .03)), x = new Float32Array(n);
+  for (let i = 0; i < n; i++) { const t = i / sr, env = Math.min(1, t / .008) * Math.exp(-4 * Math.max(0, t - .01) / d); x[i] = .5 * env * Math.sin(2 * Math.PI * f * t); }
+  return toneCache[k] = wav(x, sr);
+}
+function playEl(el) { try { const pr = el.play(); if (pr) pr.catch(err => alog("audio refusé : " + (err && err.name))); } catch (e) {} }
 function unlockAudio() { // à appeler pendant un toucher de l'utilisateur
-  try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) {}
+  try { if (navigator.audioSession && navigator.audioSession.type !== "playback") navigator.audioSession.type = "playback"; } catch (e) {}
   try {
-    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    if (!audio) { audio = new (window.AudioContext || window.webkitAudioContext)(); audio.onstatechange = () => alog("Web Audio : " + audio.state); }
     if (audio.state !== "running") audio.resume();
     const src = audio.createBufferSource(); src.buffer = audio.createBuffer(1, 1, 22050); src.connect(audio.destination); src.start(0);
-  } catch (e) { audio = null; }
+  } catch (e) { audio = null; alog("Web Audio indisponible"); }
   try {
-    if (!silentEl) { silentEl = new Audio(silentWav()); silentEl.loop = true; silentEl.setAttribute("playsinline", ""); silentEl.setAttribute("aria-hidden", "true"); }
-    const pr = silentEl.play(); if (pr) pr.catch(() => {});
+    if (!silentEl) { silentEl = new Audio(silentWav()); silentEl.loop = true; silentEl.setAttribute("playsinline", "");
+      silentEl.addEventListener("pause", () => alog("boucle muette en pause")); }
+    if (silentEl.paused) playEl(silentEl);
+    if (!toneEls.length) for (let k = 0; k < 3; k++) { const el = new Audio(silentWav()); el.setAttribute("playsinline", ""); playEl(el); toneEls.push(el); } // autorise ces éléments pour la suite
   } catch (e) {}
-  try { if ("speechSynthesis" in window && !unlockAudio.voix) { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; u.lang = "fr-FR"; speechSynthesis.speak(u); unlockAudio.voix = true; } } catch (e) {}
+  try { "speechSynthesis" in window && speechSynthesis.paused && speechSynthesis.resume(); } catch (e) {}
 }
 function releaseAudio() { try { silentEl && silentEl.pause(); } catch (e) {} }
 function beep(f = 880, d = .12, force = false) {
-  if ((!Store.settings.sons && !force) || !audio) return;
-  try { if (audio.state !== "running") audio.resume();
-    const t0 = audio.currentTime + .01, o = audio.createOscillator(), g = audio.createGain(); o.frequency.value = f; o.type = "sine";
-    g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.35, t0 + .01); g.gain.exponentialRampToValueAtTime(.0001, t0 + d);
-    o.connect(g).connect(audio.destination); o.start(t0); o.stop(t0 + d + .02); } catch (e) {}
+  if (!Store.settings.sons && !force) return;
+  let ok = false;
+  try {
+    if (audio && audio.state !== "running") audio.resume();
+    if (audio && audio.state === "running") {
+      const t0 = audio.currentTime + .01, o = audio.createOscillator(), g = audio.createGain(); o.frequency.value = f; o.type = "sine";
+      g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.35, t0 + .01); g.gain.exponentialRampToValueAtTime(.0001, t0 + d);
+      o.connect(g).connect(audio.destination); o.start(t0); o.stop(t0 + d + .02); ok = true;
+    }
+  } catch (e) {}
+  if (!ok && toneEls.length) { const el = toneEls[toneK++ % toneEls.length]; el.src = toneWav(f, d); playEl(el); }
+  if (silentEl && silentEl.paused && P) playEl(silentEl);
+  alog(`bip ${f} Hz ${ok ? "(Web Audio)" : toneEls.length ? "(secours <audio>, Web Audio " + (audio ? audio.state : "absent") + ")" : "(aucune sortie)"}`);
   try { navigator.vibrate && navigator.vibrate(d > .2 ? 200 : 40); } catch (e) {}
 }
 let frVoice = null;
 function pickVoice() { try { const vs = speechSynthesis.getVoices(); frVoice = vs.find(v => /^fr[-_]FR/i.test(v.lang) && v.localService) || vs.find(v => /^fr/i.test(v.lang)) || null; } catch (e) {} }
 if ("speechSynthesis" in window) { pickVoice(); try { speechSynthesis.addEventListener("voiceschanged", pickVoice); } catch (e) {} }
+const utt = new Set(); // garder une référence : sinon Safari peut abandonner l'annonce en cours
 function say(t, force = false) {
   if ((!Store.settings.voix && !force) || !t || !("speechSynthesis" in window)) return;
-  try { const u = new SpeechSynthesisUtterance(t); u.lang = "fr-FR"; u.rate = 1.05; if (frVoice) u.voice = frVoice;
+  try {
+    const u = new SpeechSynthesisUtterance(t); u.lang = "fr-FR"; u.rate = 1.05; if (frVoice) u.voice = frVoice;
+    u.onstart = () => alog(`voix : début « ${t} »`);
+    u.onend = () => { utt.delete(u); alog(`voix : fin « ${t} »`); try { audio && audio.state !== "running" && audio.resume(); } catch (e) {} };
+    u.onerror = ev => { utt.delete(u); alog(`voix : erreur ${ev.error || ""} « ${t} »`); };
+    utt.add(u);
+    if (speechSynthesis.paused) speechSynthesis.resume();
     // Safari iOS perd souvent une annonce lancée juste après cancel() : on laisse un court délai.
-    if (speechSynthesis.speaking || speechSynthesis.pending) { speechSynthesis.cancel(); setTimeout(() => speechSynthesis.speak(u), 90); }
+    const busy = (speechSynthesis.speaking || speechSynthesis.pending);
+    if (busy) { speechSynthesis.cancel(); setTimeout(() => speechSynthesis.speak(u), 120); }
     else speechSynthesis.speak(u);
-  } catch (e) {}
+    alog(`voix : demande « ${t} »${busy ? " (après interruption)" : ""}`);
+  } catch (e) { alog("voix : exception"); }
 }
 function testSound() {
   unlockAudio();
   [[990, .15, 0], [440, .15, 350], [990, .35, 700]].forEach(([f, d, w]) => setTimeout(() => beep(f, d, true), 150 + w));
   setTimeout(() => say("Le son fonctionne.", true), 1300);
 }
+function testSequence() { // rejoue en 16 s l'enchaînement d'une séance : annonce, compte à rebours, fin de série, repos
+  unlockAudio(); ALOG.length = 0; alog("début du test de séquence");
+  const T = [[0, () => say("Chat-vache lent", true)], [3000, () => beep(660, .08, true)], [4000, () => beep(660, .08, true)], [5000, () => beep(660, .08, true)],
+    [6000, () => { beep(990, .15, true); say("Série 1", true); }], [8500, () => beep(440, .07, true)], [10000, () => { beep(990, .1, true); say("2", true); }],
+    [12000, () => { beep(880, .35, true); say("Repos", true); }], [15000, () => beep(660, .08, true)], [16000, () => { beep(990, .15, true); say("Série 2", true); alog("fin du test"); }]];
+  T.forEach(([w, fn]) => setTimeout(fn, w));
+}
 const guided = st => st.kind === "work" && st.p.type === "reps" && Store.settings.rythme;
-async function lockScreen() { try { if ("wakeLock" in navigator) wake = await navigator.wakeLock.request("screen"); } catch (e) { wake = null; } }
+async function lockScreen() {
+  try { if ("wakeLock" in navigator) { wake = await navigator.wakeLock.request("screen"); alog("écran maintenu allumé"); return; } } catch (e) { wake = null; }
+  try { // secours : une vidéo muette en boucle empêche la mise en veille sur les anciens iOS
+    if (!sleepVid) { sleepVid = document.createElement("video"); sleepVid.muted = true; sleepVid.loop = true; sleepVid.setAttribute("playsinline", ""); sleepVid.setAttribute("aria-hidden", "true");
+      sleepVid.style.cssText = "position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;bottom:0;left:0"; sleepVid.src = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAMqbW9vdgAAAGxtdmhkAAAAAAAAAAAAAAAAAAAD6AAAB9AAAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAlV0cmFrAAAAXHRraGQAAAADAAAAAAAAAAAAAAABAAAAAAAAB9AAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAABAAAAAQAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAAfQAAAAAAABAAAAAAHNbWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAABAAAAAgABVxAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABeG1pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAAThzdGJsAAAAuHN0c2QAAAAAAAAAAQAAAKhhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAABAAEABIAAAASAAAAAAAAAABFExhdmM2My4xLjEwMiBsaWJ4MjY0AAAAAAAAAAAAAAAAGP//AAAALmF2Y0MBQsAK/+EAFmdCwArZHsBEAAADAAQAAAMACDxImSABAAVoy4PLIAAAABBwYXNwAAAAAQAAAAEAAAAUYnRydAAAAAAAAApAAAAAAAAAABhzdHRzAAAAAAAAAAEAAAACAABAAAAAABRzdHNzAAAAAAAAAAEAAAABAAAAHHN0c2MAAAAAAAAAAQAAAAEAAAACAAAAAQAAABxzdHN6AAAAAAAAAAAAAAACAAAChgAAAAoAAAAUc3RjbwAAAAAAAAABAAADWgAAAGF1ZHRhAAAAWW1ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAG1kaXJhcHBsAAAAAAAAAAAAAAAALGlsc3QAAAAkqXRvbwAAABxkYXRhAAAAAQAAAABMYXZmNjMuMS4xMDIAAAAIZnJlZQAAAphtZGF0AAACcAYF//9s3EXpvebZSLeWLNgg2SPu73gyNjQgLSBjb3JlIDE2NSByMzIyMiBiMzU2MDVhIC0gSC4yNjQvTVBFRy00IEFWQyBjb2RlYyAtIENvcHlsZWZ0IDIwMDMtMjAyNSAtIGh0dHA6Ly93d3cudmlkZW9sYW4ub3JnL3gyNjQuaHRtbCAtIG9wdGlvbnM6IGNhYmFjPTAgcmVmPTMgZGVibG9jaz0xOjA6MCBhbmFseXNlPTB4MToweDExMSBtZT1oZXggc3VibWU9NyBwc3k9MSBwc3lfcmQ9MS4wMDowLjAwIG1peGVkX3JlZj0xIG1lX3JhbmdlPTE2IGNocm9tYV9tZT0xIHRyZWxsaXM9MSA4eDhkY3Q9MCBjcW09MCBkZWFkem9uZT0yMSwxMSBmYXN0X3Bza2lwPTEgY2hyb21hX3FwX29mZnNldD0tMiB0aHJlYWRzPTEgbG9va2FoZWFkX3RocmVhZHM9MSBzbGljZWRfdGhyZWFkcz0wIG5yPTAgZGVjaW1hdGU9MSBpbnRlcmxhY2VkPTAgYmx1cmF5X2NvbXBhdD0wIGNvbnN0cmFpbmVkX2ludHJhPTAgYmZyYW1lcz0wIHdlaWdodHA9MCBrZXlpbnQ9MjUwIGtleWludF9taW49MSBzY2VuZWN1dD00MCBpbnRyYV9yZWZyZXNoPTAgcmNfbG9va2FoZWFkPTQwIHJjPWNyZiBtYnRyZWU9MSBjcmY9MjMuMCBxY29tcD0wLjYwIHFwbWluPTAgcXBtYXg9NjkgcXBzdGVwPTQgaXBfcmF0aW89MS40MCBhcT0xOjEuMDAAgAAAAA5liIQFv///D0UAAU9/gAAAAAZBmjgK+oA="; document.body.appendChild(sleepVid); }
+    playEl(sleepVid); alog("écran : secours vidéo");
+  } catch (e) { alog("écran : maintien impossible"); }
+}
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && P && !$("#player").hidden) { lockScreen(); try { audio && audio.state !== "running" && audio.resume(); } catch (e) {} } });
 // Au retour d'une mise en veille, iOS suspend le son : le premier toucher le réveille.
-document.addEventListener("pointerdown", () => { if (P && !$("#player").hidden && audio && audio.state !== "running") unlockAudio(); }, true);
+document.addEventListener("pointerdown", () => { if (P && !$("#player").hidden && (!audio || audio.state !== "running" || (silentEl && silentEl.paused))) unlockAudio(); }, true);
+document.addEventListener("visibilitychange", () => alog("page " + (document.visibilityState === "visible" ? "visible" : "masquée (veille ou autre app)")));
 
 function openPlayer(kind) {
   const steps = buildSteps(kind);
@@ -1737,13 +1794,13 @@ function closePlayer() {
   $("#player").hidden = true; document.body.style.overflow = "";
   if (P) P.running = false; P = null;
   try { speechSynthesis.cancel(); } catch (e) {}
-  releaseAudio();
+  releaseAudio(); try { sleepVid && sleepVid.pause(); } catch (e) {}
   try { wake && wake.release(); } catch (e) {} wake = null;
 }
 $("#psDoul").addEventListener("input", e => $("#psDoulOut").textContent = e.target.value);
 $("#peDoul").addEventListener("input", e => $("#peDoulOut").textContent = e.target.value);
 $("#psGo").addEventListener("click", () => {
-  unlockAudio();
+  unlockAudio(); alog("séance démarrée");
   lockScreen();
   P.douleurAvant = +$("#psDoul").value;
   $("#pStart").hidden = true; $("#pRun").hidden = false;
@@ -1797,6 +1854,7 @@ function tick() {
   renderClock();
 }
 setInterval(tick, 100);
+setInterval(() => { const b = document.getElementById("pSnd"); if (!b) return; const off = !!(P && Store.settings.sons && audio && audio.state !== "running" && !$("#pRun").hidden); if (b.hidden === off) { b.hidden = !off; if (off) alog("bandeau son suspendu affiché"); } }, 1000);
 
 function stepTags(st) {
   const tags = [];

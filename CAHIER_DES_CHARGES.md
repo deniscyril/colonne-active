@@ -128,10 +128,18 @@ Un tableau récapitulatif des trois séances (exercice, dose, avis du kiné) ser
 
 ### 5.1 Son sur iPhone
 
-- Le son est déverrouillé au toucher de « Commencer » : session audio en mode « lecture » (API `navigator.audioSession`, Safari 17+) et fichier muet joué en boucle pendant la séance, pour que l'interrupteur silencieux ne coupe pas les bips.
-- La voix attend un court délai après l'interruption d'une annonce (Safari iOS perd sinon la nouvelle annonce) ; voix française choisie quand la liste des voix est disponible.
-- Le son est réveillé au retour de veille et au premier toucher.
-- Réglages : bouton « Tester le son et la voix » (trois bips puis une phrase), avec un rappel sur le volume multimédia et le mode silencieux.
+- Le son est déverrouillé au toucher de « Commencer » :
+  - session audio en mode « lecture » (API `navigator.audioSession`, Safari 17+) ;
+  - fichier muet joué en boucle pendant la séance, pour que l'interrupteur silencieux ne coupe pas les bips ;
+  - trois éléments `<audio>` autorisés pour jouer plus tard les bips de secours.
+- **Bips de secours** : si iOS suspend le contexte Web Audio (annonce vocale, notification, veille), le bip est joué par un élément `<audio>` (son pré-calculé en WAV).
+- **Bandeau** dans le lecteur quand le son est suspendu : « touche ici pour le rétablir ». Tout toucher pendant la séance relance le son.
+- **Voix** : court délai après l'interruption d'une annonce (Safari iOS perd sinon la nouvelle annonce), références gardées sur les annonces en cours, reprise si la synthèse est en pause, voix française choisie.
+- **Écran allumé** : API Wake Lock ; à défaut, vidéo muette en boucle.
+- **Réglages** :
+  - « Tester le son et la voix » : trois bips puis une phrase ;
+  - « Tester un enchaînement de séance » : 16 s qui rejouent annonce, compte à rebours, fin de série et repos ;
+  - « Journal du son » : derniers événements (bips et canal utilisé, voix, état Web Audio, veille) pour le diagnostic.
 
 ## 6. Suivi
 
@@ -268,3 +276,4 @@ Des médailles dessinées en SVG, dans l'esprit des récompenses d'activité de 
 7. Dépôt GitHub avec GitHub Pages, cahier des charges, effort en 5 emoji, valeurs par défaut de la natation (60 min, 1300 m), séries et badges, assiduité natation.
 8. Natation suspendue pendant les petites vacances scolaires de la zone B ; badges redessinés en médailles (style récompenses Apple Watch).
 9. Son inaudible sur iPhone : déverrouillage audio pour iOS et bouton de test du son.
+10. Son présent au début de la séance puis plus rien : bips de secours, voix fiabilisée, bandeau de reprise, test d'enchaînement et journal du son.
