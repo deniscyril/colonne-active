@@ -1554,7 +1554,7 @@ function renderSettings() {
         <div class="field"><h3>Préparation avant chaque exercice</h3>${seg("prep", S.prep, [[5,"5 s"],[10,"10 s"],[15,"15 s"],[20,"20 s"]])}</div>
         <div class="field"><label class="check"><input type="checkbox" id="setSons" ${S.sons ? "checked" : ""}><span><b>Signaux sonores</b><br><span class="muted" style="font-size:.88rem">Bips pendant les 3 dernières secondes et au changement de phase.</span></span></label>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px"><button class="btn sm" id="testSon">Tester le son et la voix</button><button class="btn sm" id="testSeq">Tester un enchaînement de séance (16 s)</button></div>
-          <details style="margin-top:8px"><summary class="muted" style="font-size:.85rem;cursor:pointer">Journal du son (diagnostic)</summary><pre id="audioLog" style="font-size:.72rem;white-space:pre-wrap;background:var(--surface-2);padding:8px;border-radius:8px;margin-top:6px;max-height:260px;overflow:auto">${ALOG.slice(-14).join("\n") || "Vide : lance un test ou une séance."}</pre></details>
+          <details style="margin-top:8px"><summary class="muted" style="font-size:.85rem;cursor:pointer">Journal du son (diagnostic)</summary><pre id="audioLog" style="font-size:.72rem;white-space:pre-wrap;background:var(--surface-2);padding:8px;border-radius:8px;margin-top:6px;max-height:360px;overflow:auto">${ALOG.join("\n") || "Vide : lance un test ou une séance."}</pre></details>
           <p class="muted" style="font-size:.82rem;margin-top:6px">Sur iPhone : monte le volume avec les boutons latéraux pendant le test (c'est le volume « multimédia » qui compte, pas celui de la sonnerie). Si tu n'entends toujours rien, désactive le mode silencieux.</p></div>
         <div class="field"><label class="check"><input type="checkbox" id="setRythme" ${S.rythme ? "checked" : ""}><span><b>Rythme guidé pour les répétitions</b><br><span class="muted" style="font-size:.88rem">Chaque répétition est chronométrée : bip aigu au début, bip grave à mi-parcours pour repartir dans l'autre sens, puis passage automatique à la suite. Décoche pour compter toi-même.</span></span></label></div>
         <div class="field"><label class="check"><input type="checkbox" id="setVoix" ${S.voix ? "checked" : ""}><span><b>Annonces vocales</b><br><span class="muted" style="font-size:.88rem">Une voix annonce l'exercice, la série, le côté et compte les répétitions et les maintiens. Utilise la voix française de ton appareil.</span></span></label></div>
@@ -1677,7 +1677,7 @@ const ALOG = [];
 function alog(m) {
   const t = new Date(); ALOG.push(`${String(t.getMinutes()).padStart(2, "0")}:${String(t.getSeconds()).padStart(2, "0")}.${String(Math.floor(t.getMilliseconds() / 100))} ${m}`);
   if (ALOG.length > 60) ALOG.shift();
-  const box = document.getElementById("audioLog"); if (box) { box.textContent = ALOG.slice(-14).join("\n"); }
+  const box = document.getElementById("audioLog"); if (box) { box.textContent = ALOG.join("\n"); box.scrollTop = box.scrollHeight; }
 }
 function wav(samples, sr = 22050) {
   const n = samples.length, b = new Uint8Array(44 + n * 2), v = new DataView(b.buffer);
@@ -1693,7 +1693,7 @@ const toneCache = {};
 function toneWav(f, d) {
   const k = f + ":" + d; if (toneCache[k]) return toneCache[k];
   const sr = 22050, n = Math.round(sr * (d + .03)), x = new Float32Array(n);
-  for (let i = 0; i < n; i++) { const t = i / sr, env = Math.min(1, t / .008) * Math.exp(-4 * Math.max(0, t - .01) / d); x[i] = .5 * env * Math.sin(2 * Math.PI * f * t); }
+  for (let i = 0; i < n; i++) { const t = i / sr, env = Math.min(1, t / .008) * Math.exp(-4 * Math.max(0, t - .01) / d); x[i] = .8 * env * Math.sin(2 * Math.PI * f * t); }
   return toneCache[k] = wav(x, sr);
 }
 function playEl(el) { try { const pr = el.play(); if (pr) pr.catch(err => alog("audio refusé : " + (err && err.name))); } catch (e) {} }
@@ -1713,14 +1713,17 @@ function unlockAudio() { // à appeler pendant un toucher de l'utilisateur
   try { "speechSynthesis" in window && speechSynthesis.paused && speechSynthesis.resume(); } catch (e) {}
 }
 function releaseAudio() { try { silentEl && silentEl.pause(); } catch (e) {} }
+let beepUntil = 0;
 function beep(f = 880, d = .12, force = false) {
   if (!Store.settings.sons && !force) return;
+  d = Math.max(d, .13); // un bip de 80 ms passe mal dans le haut-parleur de l'iPhone
+  beepUntil = Math.max(beepUntil, Date.now() + d * 1000);
   let ok = false;
   try {
     if (audio && audio.state !== "running") audio.resume();
     if (audio && audio.state === "running") {
       const t0 = audio.currentTime + .01, o = audio.createOscillator(), g = audio.createGain(); o.frequency.value = f; o.type = "sine";
-      g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.35, t0 + .01); g.gain.exponentialRampToValueAtTime(.0001, t0 + d);
+      g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.6, t0 + .01); g.gain.exponentialRampToValueAtTime(.0001, t0 + d);
       o.connect(g).connect(audio.destination); o.start(t0); o.stop(t0 + d + .02); ok = true;
     }
   } catch (e) {}
@@ -1744,7 +1747,9 @@ function say(t, force = false) {
     if (speechSynthesis.paused) speechSynthesis.resume();
     // Safari iOS perd souvent une annonce lancée juste après cancel() : on laisse un court délai.
     const busy = (speechSynthesis.speaking || speechSynthesis.pending);
-    if (busy) { speechSynthesis.cancel(); setTimeout(() => speechSynthesis.speak(u), 120); }
+    const wait = Math.max(0, beepUntil - Date.now() + 150); // laisser le bip se terminer : iOS coupe les autres sons quand la voix démarre
+    if (busy) speechSynthesis.cancel();
+    if (busy || wait > 0) setTimeout(() => speechSynthesis.speak(u), Math.max(wait, busy ? 120 : 0));
     else speechSynthesis.speak(u);
     alog(`voix : demande « ${t} »${busy ? " (après interruption)" : ""}`);
   } catch (e) { alog("voix : exception"); }
