@@ -1657,7 +1657,15 @@ const C = 628.3;
 // 2. si iOS suspend le contexte Web Audio (annonce vocale, notification, veille), le bip passe par un
 //    élément <audio> déjà autorisé pendant le toucher de « Commencer » ;
 // 3. un journal (ALOG) garde les derniers événements sonores pour le diagnostic.
-let silentEl = null, sleepVid = null, toneK = 0;
+let silentEl = null, sleepVid = null, toneK = 0, testUntil = 0;
+const audioActive = () => !!P || Date.now() < testUntil;
+// iOS interrompt tout le son de la page quand la voix démarre (Web Audio « interrupted », boucle muette en pause).
+// Après chaque annonce, on relance les deux.
+function reviveAudio(why) {
+  if (!audioActive()) return;
+  try { if (audio && audio.state !== "running") { audio.resume().then(() => alog(`Web Audio relancé (${why})`), err => alog(`Web Audio : relance refusée (${err && err.name})`)); } } catch (e) {}
+  try { if (silentEl && silentEl.paused) { const pr = silentEl.play(); if (pr) pr.then(() => alog(`boucle muette relancée (${why})`), err => alog(`boucle muette : relance refusée (${err && err.name})`)); } } catch (e) {}
+}
 const toneEls = [];
 const ALOG = [];
 function alog(m) {
@@ -1686,7 +1694,7 @@ function playEl(el) { try { const pr = el.play(); if (pr) pr.catch(err => alog("
 function unlockAudio() { // à appeler pendant un toucher de l'utilisateur
   try { if (navigator.audioSession && navigator.audioSession.type !== "playback") navigator.audioSession.type = "playback"; } catch (e) {}
   try {
-    if (!audio) { audio = new (window.AudioContext || window.webkitAudioContext)(); audio.onstatechange = () => alog("Web Audio : " + audio.state); }
+    if (!audio) { audio = new (window.AudioContext || window.webkitAudioContext)(); audio.onstatechange = () => { alog("Web Audio : " + audio.state); if (audio.state !== "running" && !("speechSynthesis" in window && speechSynthesis.speaking)) setTimeout(() => reviveAudio("après " + audio.state), 300); }; }
     if (audio.state !== "running") audio.resume();
     const src = audio.createBufferSource(); src.buffer = audio.createBuffer(1, 1, 22050); src.connect(audio.destination); src.start(0);
   } catch (e) { audio = null; alog("Web Audio indisponible"); }
@@ -1714,7 +1722,7 @@ function beep(f = 880, d = .12, force = false) {
     }
   } catch (e) {}
   if (!ok && toneEls.length) { const el = toneEls[toneK++ % toneEls.length]; el.src = toneWav(f, d); playEl(el); }
-  if (silentEl && silentEl.paused && P) playEl(silentEl);
+  if (silentEl && silentEl.paused && audioActive()) reviveAudio("bip");
   alog(`bip ${f} Hz ${ok ? "(Web Audio)" : toneEls.length ? "(secours <audio>, Web Audio " + (audio ? audio.state : "absent") + ")" : "(aucune sortie)"}`);
   try { navigator.vibrate && navigator.vibrate(d > .2 ? 200 : 40); } catch (e) {}
 }
@@ -1727,8 +1735,8 @@ function say(t, force = false) {
   try {
     const u = new SpeechSynthesisUtterance(t); u.lang = "fr-FR"; u.rate = 1.05; if (frVoice) u.voice = frVoice;
     u.onstart = () => alog(`voix : début « ${t} »`);
-    u.onend = () => { utt.delete(u); alog(`voix : fin « ${t} »`); try { audio && audio.state !== "running" && audio.resume(); } catch (e) {} };
-    u.onerror = ev => { utt.delete(u); alog(`voix : erreur ${ev.error || ""} « ${t} »`); };
+    u.onend = () => { utt.delete(u); alog(`voix : fin « ${t} »`); setTimeout(() => reviveAudio("fin de voix"), 50); };
+    u.onerror = ev => { utt.delete(u); alog(`voix : ${ev.error === "canceled" || ev.error === "interrupted" ? "coupée" : "erreur " + (ev.error || "")} « ${t} »`); setTimeout(() => reviveAudio("voix coupée"), 50); };
     utt.add(u);
     if (speechSynthesis.paused) speechSynthesis.resume();
     // Safari iOS perd souvent une annonce lancée juste après cancel() : on laisse un court délai.
@@ -1741,12 +1749,12 @@ function say(t, force = false) {
   } catch (e) { alog("voix : exception"); }
 }
 function testSound() {
-  unlockAudio();
+  testUntil = Date.now() + 3000; unlockAudio();
   [[990, .15, 0], [440, .15, 350], [990, .35, 700]].forEach(([f, d, w]) => setTimeout(() => beep(f, d, true), 150 + w));
   setTimeout(() => say("Le son fonctionne.", true), 1300);
 }
 function testSequence() { // rejoue en 16 s l'enchaînement d'une séance : annonce, compte à rebours, fin de série, repos
-  unlockAudio(); ALOG.length = 0; alog("début du test de séquence");
+  testUntil = Date.now() + 19000; unlockAudio(); ALOG.length = 0; alog("début du test de séquence" + (navigator.audioSession ? ", session " + navigator.audioSession.type : ", pas d'API audioSession"));
   const T = [[0, () => say("Chat-vache lent", true)], [3000, () => beep(660, .08, true)], [4000, () => beep(660, .08, true)], [5000, () => beep(660, .08, true)],
     [6000, () => { beep(990, .15, true); say("Série 1", true); }], [8500, () => beep(440, .07, true)], [10000, () => { beep(990, .1, true); say("2", true); }],
     [12000, () => { beep(880, .35, true); say("Repos", true); }], [15000, () => beep(660, .08, true)], [16000, () => { beep(990, .15, true); say("Série 2", true); alog("fin du test"); }]];

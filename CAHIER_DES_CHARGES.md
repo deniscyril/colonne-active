@@ -135,6 +135,7 @@ Un tableau récapitulatif des trois séances (exercice, dose, avis du kiné) ser
 - **Bips de secours** : si iOS suspend le contexte Web Audio (annonce vocale, notification, veille), le bip est joué par un élément `<audio>` (son pré-calculé en WAV).
 - **Bandeau** dans le lecteur quand le son est suspendu : « touche ici pour le rétablir ». Tout toucher pendant la séance relance le son.
 - **Voix** : court délai après l'interruption d'une annonce (Safari iOS perd sinon la nouvelle annonce), références gardées sur les annonces en cours, reprise si la synthèse est en pause, voix française choisie.
+- **Relance après la voix** : sur iPhone, une annonce vocale interrompt tout le son de la page (Web Audio « interrupted », boucle muette en pause). Après chaque annonce, et à chaque changement d'état du son, l'app relance Web Audio et la boucle muette, et note le résultat dans le journal.
 - **Bip puis voix** : une annonce attend la fin du bip qui l'accompagne (+ 150 ms), car iOS baisse ou coupe les autres sons quand la voix démarre. Bips d'au moins 130 ms, plus forts.
 - **Écran allumé** : API Wake Lock ; à défaut, vidéo muette en boucle.
 - **Réglages** :
@@ -279,3 +280,4 @@ Des médailles dessinées en SVG, dans l'esprit des récompenses d'activité de 
 9. Son inaudible sur iPhone : déverrouillage audio pour iOS et bouton de test du son.
 10. Son présent au début de la séance puis plus rien : bips de secours, voix fiabilisée, bandeau de reprise, test d'enchaînement et journal du son.
 11. Bips couverts par la voix sur iPhone : la voix attend la fin du bip ; bips plus longs et plus forts ; journal du son complet.
+12. Journal iPhone : la voix interrompt Web Audio et la boucle muette ; relance automatique après chaque annonce.
