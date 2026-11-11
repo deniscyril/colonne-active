@@ -237,6 +237,12 @@ Des médailles dessinées en SVG, dans l'esprit des récompenses d'activité de 
 - Signaux sonores.
 - Rythme guidé pour les répétitions.
 - Annonces vocales.
+- **Personnaliser le son** :
+  - profils : **Complet** (tout), **Essentiel** (sans le comptage vocal des répétitions), **Discret** (un bip au début et à la fin de chaque effort et le nom de l'exercice) ; « Personnalisé » s'affiche dès qu'un choix diffère ;
+  - bips, un par un : début et fin de chaque effort ; décompte des 3 dernières secondes ; rythme des répétitions (début et mi-parcours) ;
+  - voix, une par une : nom de l'exercice ; série et côté ; comptage des répétitions et des maintiens ; « Repos » ;
+  - volume des bips et volume de la voix (0 à 100 %), avec un échantillon joué au réglage ;
+  - le test d'enchaînement joue un aperçu avec ces réglages.
 - Matériel disponible.
 - Réinitialisation des niveaux.
 - **Données** : export et import du journal et des réglages en JSON (version hors claude.ai).
@@ -253,7 +259,7 @@ Des médailles dessinées en SVG, dans l'esprit des récompenses d'activité de 
   - Entrée de journal :
     `{ id, type: courte|longue|natation|course, variante?: courte|courte_b|longue, date: AAAA-MM-JJ, duree (min), distance (km), douleurAvant, douleurApres (0–10), effort (1–5), exosFaits, exosTotal, notes, ts }`
   - Réglages :
-    `{ convexe, asym, sons, rythme, voix, prep, niveaux{exo: niveau}, kine{exo: {s, note}}, materiel{} }`
+    `{ convexe, asym, sons, rythme, voix, prep, son{debutFin, decompte, rythmeBip, vNom, vSerie, vCompte, vRepos, volBip, volVoix}, niveaux{exo: niveau}, kine{exo: {s, note}}, materiel{} }`
 - **Navigation** par ancre : `#aujourdhui`, `#suivi`, `#exercices`, `#reglages`.
 - **Affichage**
   - Thème clair et thème sombre, suivant le système.
@@ -284,3 +290,4 @@ Des médailles dessinées en SVG, dans l'esprit des récompenses d'activité de 
 12. Journal iPhone : la voix interrompt Web Audio et la boucle muette ; relance automatique après chaque annonce.
 13. iPhone en mode silencieux confirmé : bandeau « Son coupé par l'iPhone (mode silencieux ?) » quand la relance automatique échoue.
 14. Bips toujours coupés en mode silencieux après chaque annonce : voix enregistrée jouée par Web Audio à la place de la synthèse vocale.
+15. Personnalisation du son : profils Complet, Essentiel, Discret, choix bip par bip et annonce par annonce, volumes séparés.
