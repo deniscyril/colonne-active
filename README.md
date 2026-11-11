@@ -12,7 +12,7 @@ Webapp de séances guidées de renforcement profond du dos, de mobilité, de tra
 - Un lecteur guidé avec minuteur, bips, rythme des répétitions et annonces vocales.
 - 23 fiches d'exercices avec schémas, étapes, niveaux, vidéos et avis du kiné.
 - Un suivi : journal, douleur, effort en emoji, grille sur 8 semaines.
-- Des outils de motivation : séries de jours consécutifs, 16 badges, assiduité natation.
+- Des outils de motivation : séries de jours consécutifs, 16 médailles, assiduité natation (hors petites vacances de la zone B).
 
 Le détail est dans [CAHIER_DES_CHARGES.md](CAHIER_DES_CHARGES.md).
 

@@ -153,7 +153,7 @@ Un tableau récapitulatif des trois séances (exercice, dose, avis du kiné) ser
 
 - Une séance courte ou longue enregistrée compte pour la journée.
 - La série en cours reste valable tant que la séance du jour n'est pas encore faite.
-- La carte 🔥 affiche :
+- La carte de série affiche, à côté d'une médaille hexagonale qui porte le nombre de jours :
   - la série actuelle ;
   - le message du jour (« Fais ta séance aujourd'hui pour passer à N + 1 jours ») ;
   - le prochain badge de série ;
@@ -162,37 +162,50 @@ Un tableau récapitulatif des trois séances (exercice, dose, avis du kiné) ser
 
 ### 7.2 Assiduité natation
 
-- **Semaines complètes de suite** avec 2 nages. La semaine en cours compte dès qu'elle est complète.
+- **Petites vacances scolaires de la zone B** (Toussaint, Noël, hiver, printemps) : pas de séance de natation.
+  - Dates du calendrier officiel (data.education.gouv.fr), saisies dans `VACANCES` jusqu'à l'année 2027-2028. À compléter chaque année.
+  - Une semaine de vacances est **neutre** : elle ne casse pas la série et n'entre pas dans le taux d'assiduité.
+  - Ces jours-là, « Aujourd'hui » affiche « Pas de natation ce soir » au lieu du rappel, et la note du jour est ajustée.
+  - La grille des 8 semaines hachure les jours de vacances ; la frise natation marque la semaine « vac. ».
+  - La tuile hebdomadaire natation vise le nombre de nages prévues (0 pendant les vacances).
+- **Semaines complètes de suite** : toutes les nages prévues de la semaine sont faites. La semaine en cours compte dès qu'elle est complète.
 - **Record** de semaines complètes.
-- **Taux d'assiduité sur 8 semaines** : nages faites / nages prévues (lundi et jeudi), compté depuis la première activité notée.
+- **Taux d'assiduité sur 8 semaines** : nages faites / nages prévues (lundi et jeudi, hors vacances), compté depuis la première activité notée.
 - **Distance nagée** sur le mois en cours et au total, nombre de nages.
 - Frise de 8 semaines, avec deux pastilles par semaine.
-- Les lundis et jeudis, un rappel « Natation ce soir » s'affiche sur « Aujourd'hui », avec un bouton pour noter la nage.
+- Les lundis et jeudis hors vacances, un rappel « Natation ce soir » s'affiche sur « Aujourd'hui », avec un bouton pour noter la nage.
 
 ### 7.3 Badges (16)
 
-| Badge | Condition |
-|---|---|
-| 🌱 Premier pas | 1re séance de renfo |
-| 🔥 Trois de suite | 3 jours consécutifs |
-| ⚡ Cinq de suite | 5 jours consécutifs |
-| 🏅 Semaine pleine | 7 jours consécutifs |
-| 🥈 Quinzaine | 14 jours consécutifs |
-| 🏆 Un mois | 30 jours consécutifs |
-| 📅 Semaine régulière | 5 jours de renfo dans la même semaine |
-| 🔄 Dos et jambes | Courte A et courte B dans la même semaine |
-| 🧱 Fondations | 10 séances longues |
-| 🎯 25 séances | 25 séances de renfo |
-| 💯 Centurion | 100 séances de renfo |
-| 🏊 À l'eau | 1re nage notée |
-| 🌊 Un mois au bassin | 4 semaines de suite avec 2 nages |
-| 🐬 Trimestre aquatique | 12 semaines de suite avec 2 nages |
-| 🗺️ 10 km nagés | distance cumulée |
-| 🌍 50 km nagés | distance cumulée |
+Des médailles dessinées en SVG, dans l'esprit des récompenses d'activité de l'Apple Watch :
+
+- **Forme par famille** : cercle (nombre de séances), hexagone (séries de jours), octogone (régularité dans la semaine), carré arrondi (séances longues), écusson (natation), losange (distance nagée).
+- **Métal du cerclage selon le palier** : bronze, argent ou or.
+- **Face** en dégradé radial de la couleur du badge, chiffre en relief, pictogramme (flamme, vague, goutte, pousse, haltère, calendrier, briques) et unité en petites capitales, reflet brillant en haut.
+- **Badge non obtenu** : même médaille en gris translucide, avec barre et texte de progression.
+- **Un toucher** sur un badge l'ouvre en grand sur fond sombre, avec une entrée en rotation 3D. Cette animation est désactivée si le système demande de réduire les animations.
+- **Nouveau badge** à l'enregistrement : la même fenêtre s'ouvre (« Nouveau badge », ou « N nouveaux badges » avec les autres en miniature), avec un petit arpège si les sons sont activés.
+
+| Badge | Forme · palier | Condition |
+|---|---|---|
+| Premier pas | cercle vert · bronze | 1re séance de renfo |
+| Trois de suite | hexagone orange · bronze | 3 jours consécutifs |
+| Cinq de suite | hexagone rouge · argent | 5 jours consécutifs |
+| Semaine pleine | hexagone rose · argent | 7 jours consécutifs |
+| Quinzaine | hexagone violet · or | 14 jours consécutifs |
+| Un mois | hexagone doré · or | 30 jours consécutifs |
+| Semaine régulière | octogone bleu · argent | 5 jours de renfo dans la même semaine |
+| Dos et jambes | octogone turquoise · bronze | Courte A et courte B dans la même semaine |
+| Fondations | carré pierre · argent | 10 séances longues |
+| 25 séances | cercle bleu ciel · argent | 25 séances de renfo |
+| Centurion | cercle rouge · or | 100 séances de renfo |
+| À l'eau | écusson cyan · bronze | 1re nage notée |
+| Un mois au bassin | écusson bleu · argent | 4 semaines complètes de suite (vacances neutres) |
+| Trimestre aquatique | écusson indigo · or | 12 semaines complètes de suite (vacances neutres) |
+| 10 km nagés | losange vert d'eau · argent | distance cumulée |
+| 50 km nagés | losange bleu océan · or | distance cumulée |
 
 - Un badge gagné reste acquis.
-- Chaque badge non obtenu affiche sa barre de progression.
-- Un toast annonce chaque nouveau badge à l'enregistrement.
 - Rappel affiché : la douleur passe avant la série.
 
 ## 8. Réglages
@@ -246,3 +259,4 @@ Un tableau récapitulatif des trois séances (exercice, dose, avis du kiné) ser
 5. Planche de Copenhague retirée des séances.
 6. Repères sonores : rythme guidé des répétitions et annonces vocales.
 7. Dépôt GitHub avec GitHub Pages, cahier des charges, effort en 5 emoji, valeurs par défaut de la natation (60 min, 1300 m), séries et badges, assiduité natation.
+8. Natation suspendue pendant les petites vacances scolaires de la zone B ; badges redessinés en médailles (style récompenses Apple Watch).

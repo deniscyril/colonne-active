@@ -126,6 +126,10 @@ main.wrap { padding-block: 24px 64px; display: grid; gap: 28px; }
 .grid8 .wk { color: var(--muted); align-self: center; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .grid8 .c { height: 34px; border-radius: 6px; background: var(--surface-2); display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 3px; padding: 3px; }
 .grid8 .c.fut { background: transparent; border: 1px dashed var(--line); }
+.grid8 .c.vac, .legend .vacsw { background: repeating-linear-gradient(135deg, var(--surface-2) 0 4px, color-mix(in srgb, var(--natation) 22%, var(--surface-2)) 4px 7px); }
+.legend .vacsw { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+.swimweeks div.vac { font-style: italic; }
+.swimweeks .dots i.off { border-style: dashed; opacity: .45; }
 .scroll-x { overflow-x: auto; }
 .chart svg { width: 100%; height: auto; display: block; }
 .journal { display: grid; gap: 8px; }
@@ -212,15 +216,32 @@ table.prog button { border: 0; background: none; padding: 0; color: var(--ink); 
 .streak { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .streak .big { font-family: var(--f-mono); font-size: 2rem; font-weight: 700; line-height: 1; }
 .streak .big small { font-size: .9rem; color: var(--muted); font-weight: 500; font-family: var(--f-body); }
-.badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
-.badge { border: 1px solid var(--line); border-radius: 12px; padding: 10px 8px; display: grid; justify-items: center; gap: 3px; text-align: center; background: var(--surface); }
-.badge .e { font-size: 1.9rem; line-height: 1.1; }
-.badge b { font-size: .82rem; }
-.badge span.d { font-size: .72rem; color: var(--muted); line-height: 1.3; }
-.badge.lock .e { filter: grayscale(1); opacity: .35; }
+.badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 16px 8px; }
+.badge { appearance: none; border: 0; background: none; color: inherit; font: inherit; padding: 6px 4px; border-radius: 14px; display: grid; justify-items: center; align-content: start; gap: 4px; text-align: center; cursor: pointer; }
+.badge:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.badge b { font-size: .8rem; line-height: 1.25; }
+.badge span.d { font-size: .7rem; color: var(--muted); line-height: 1.3; }
 .badge.lock b { color: var(--muted); }
-.badge.got { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
-.badge .meter { width: 100%; }
+.badge .meter { width: 72%; }
+.medal { display: block; overflow: visible; filter: drop-shadow(0 3px 5px rgb(0 0 0 / .25)); transition: transform .2s ease; }
+.medal.lock { filter: grayscale(1) contrast(.7) brightness(1.1); opacity: .36; }
+.badge:hover .medal:not(.lock) { transform: translateY(-3px) scale(1.04); }
+.medal-pop { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 16px; background: radial-gradient(circle at 50% 38%, rgb(28 34 44 / .9), rgb(4 6 9 / .96)); }
+.mp-card { color: #fff; text-align: center; display: grid; justify-items: center; gap: 10px; width: min(340px, 100%); }
+.mp-card .eyebrow { color: #FFD66B; letter-spacing: .12em; text-transform: uppercase; font-size: .78rem; font-weight: 700; }
+.mp-card h2 { font-size: 1.5rem; }
+.mp-card p { color: rgb(255 255 255 / .72); font-size: .92rem; }
+.mp-card .meter { width: 70%; background: rgb(255 255 255 / .15); }
+.mp-medal { perspective: 900px; padding: 8px; }
+.mp-medal .medal { animation: medal-in 1.4s cubic-bezier(.17, .84, .32, 1) both; filter: drop-shadow(0 10px 24px rgb(0 0 0 / .55)); }
+.mp-medal .medal.lock { filter: grayscale(1) brightness(.9); opacity: .5; }
+@keyframes medal-in { 0% { transform: rotateY(-900deg) scale(.35); opacity: 0; } 35% { opacity: 1; } 100% { transform: rotateY(0) scale(1); } }
+.mp-more { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.mp-more span { display: grid; justify-items: center; gap: 4px; font-size: .72rem; color: rgb(255 255 255 / .75); max-width: 80px; }
+.mp-card .btn { margin-top: 8px; min-width: 160px; }
+@media (prefers-reduced-motion: reduce) { .mp-medal .medal { animation: none; } .medal { transition: none; } }
+.streak .medal { flex: none; }
+.streak > div, .streak > p { flex: 1 1 220px; min-width: 0; }
 .swimweeks { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
 .swimweeks div { display: grid; justify-items: center; gap: 4px; font-size: .7rem; color: var(--muted); }
 .swimweeks .dots { display: flex; gap: 3px; }
@@ -396,6 +417,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 </div>
 
 <div class="toast" id="toast" hidden></div>
+<div class="medal-pop" id="medalPop" hidden><div class="mp-card" role="dialog" aria-modal="true" aria-labelledby="mpT"><p class="eyebrow" id="mpK"></p><div class="mp-medal" id="mpM"></div><h2 id="mpT"></h2><p id="mpD"></p><div id="mpX" style="display:grid;gap:10px;justify-items:center;width:100%"></div><button class="btn primary" id="mpClose">Continuer</button></div></div>
 
 <script>
 /* ------------------------------------------------------------------ */
@@ -419,6 +441,17 @@ const SEMAINE = [
   { prevu: ["longue"],            note: "Séance longue. Si tu cours demain, retire une série au bloc tendons." },
   { prevu: ["courte","course"],   var: "courte",   note: "Troisième course facultative, suivie de la courte A. Sans course, fais plutôt la courte B et marche." },
 ];
+
+// Petites vacances scolaires, zone B (calendrier officiel, data.education.gouv.fr) :
+// [nom, premier jour, jour de reprise]. Pas de natation ces jours-là. À compléter chaque année.
+const VACANCES = [
+  ["de la Toussaint", "2025-10-18", "2025-11-03"], ["de Noël", "2025-12-20", "2026-01-05"], ["d'hiver", "2026-02-14", "2026-03-02"], ["de printemps", "2026-04-11", "2026-04-27"],
+  ["de la Toussaint", "2026-10-17", "2026-11-02"], ["de Noël", "2026-12-19", "2027-01-04"], ["d'hiver", "2027-02-20", "2027-03-08"], ["de printemps", "2027-04-17", "2027-05-03"],
+  ["de la Toussaint", "2027-10-23", "2027-11-08"], ["de Noël", "2027-12-18", "2028-01-03"], ["d'hiver", "2028-02-05", "2028-02-21"], ["de printemps", "2028-04-08", "2028-04-24"],
+];
+const vacance = iso => { const v = VACANCES.find(([, a, b]) => iso >= a && iso < b); return v ? v[0] : null; };
+const prevuLe = (d, i = dayIdx(d)) => SEMAINE[i].prevu.filter(t => t !== "natation" || !vacance(toISO(d)));
+const nagesPrevues = (mon, jusqua = 6) => { let n = 0; for (let i = 0; i <= jusqua; i++) if (prevuLe(addDays(mon, i), i).includes("natation")) n++; return n; };
 
 const YT = id => `https://www.youtube.com/watch?v=${id}`;
 const EXOS = {
@@ -1115,7 +1148,7 @@ function renderToday() {
   const week = JOURS.map((j, i) => {
     const d = addDays(mon, i), dIso = toISO(d);
     const done = [...new Set(entriesOn(dIso).map(e => e.type))];
-    const types = [...new Set([...SEMAINE[i].prevu, ...done])];
+    const types = [...new Set([...prevuLe(d, i), ...done])];
     return `<div class="day${i === di ? " today" : ""}"><span class="dn">${j.slice(0, 3)}</span><span class="dd">${d.getDate()}</span><div class="marks">${marks(types, done)}</div></div>`;
   }).join("");
   const S = Store.settings;
@@ -1123,12 +1156,13 @@ function renderToday() {
     <div class="today-head">
       <p class="eyebrow">${JOURS[di]} ${now.getDate()} ${MOIS[now.getMonth()]}</p>
       <h1>Aujourd'hui : ${titre}</h1>
-      <p class="muted plan-note">${plan.note}</p>
+      <p class="muted plan-note">${vacance(iso) ? plan.note.replace(" Natation le soir.", " Pas de natation (vacances).").replace(", natation le soir.", " ; pas de natation (vacances).") : plan.note}</p>
     </div>
     ${!S.convexe ? `<div class="notice">Indique dans <a href="#reglages">Réglages</a> de quel côté se trouve la convexité de ta courbure lombaire : le schéma et la planche latérale s'y adaptent.</div>` : ""}
     ${!Object.values(S.kine || {}).some(k => k && k.s) ? `<div class="notice">Avant de te lancer, fais valider les routines par ton kiné : l'onglet <a href="#exercices">Exercices</a> présente le programme complet, avec pour chaque exercice des schémas, les étapes, des vidéos et un espace pour noter son avis.</div>` : ""}
     ${streakCard(stats())}
-    ${plan.prevu.includes("natation") ? (() => { const s = stats(); return `<div class="card streak"><span style="font-size:1.6rem" aria-hidden="true">🏊</span><p style="font-size:.92rem">Natation ce soir. ${s.swimWeek ? `Déjà ${s.swimWeek} nage cette semaine.` : "Première nage de la semaine."} ${s.swimStreak ? `${s.swimStreak} semaine${s.swimStreak > 1 ? "s" : ""} complète${s.swimStreak > 1 ? "s" : ""} de suite.` : ""} <button class="btn sm" data-log="natation">Noter la nage</button></p></div>`; })() : ""}
+    ${plan.prevu.includes("natation") && vacance(iso) ? `<div class="card streak"><span style="font-size:1.6rem" aria-hidden="true">🏖️</span><p style="font-size:.92rem">Pas de natation ce soir : vacances ${vacance(iso)} (zone B). Ta série natation est en pause, elle reprend à la rentrée.</p></div>` : ""}
+    ${plan.prevu.includes("natation") && !vacance(iso) ? (() => { const s = stats(); return `<div class="card streak"><span style="font-size:1.6rem" aria-hidden="true">🏊</span><p style="font-size:.92rem">Natation ce soir. ${s.swimWeek ? `Déjà ${s.swimWeek} nage cette semaine.` : "Première nage de la semaine."} ${s.swimStreak ? `${s.swimStreak} semaine${s.swimStreak > 1 ? "s" : ""} complète${s.swimStreak > 1 ? "s" : ""} de suite.` : ""} <button class="btn sm" data-log="natation">Noter la nage</button></p></div>`; })() : ""}
     <div class="sessions">${[reco, ...Object.keys(SEANCES).filter(k => k !== reco)].map(sessCard).join("")}</div>
     <section class="card" style="display:grid;gap:14px">
       <div class="row-between"><h2>Cette semaine</h2><button class="btn sm" data-log="natation">+ Noter une activité</button></div>
@@ -1172,20 +1206,22 @@ function stats() {
     if (e.type === "natation") o.swims++;
   }
   const monNow = monday(today), wkOf = i => wk[toISO(addDays(monNow, -7 * i))] || { rDays: new Set(), vars: new Set(), swims: 0 };
-  // natation : semaines consécutives avec 2 nages (la semaine en cours compte si déjà complète)
-  let swimStreak = 0, i = wkOf(0).swims >= 2 ? 0 : 1;
-  while (wkOf(i).swims >= 2) { swimStreak++; i++; }
+  // natation : semaines complètes consécutives ; une semaine de vacances (aucune nage prévue) est neutre
+  const planOf = i => nagesPrevues(addDays(monNow, -7 * i));
+  const complete = i => wkOf(i).swims >= planOf(i);
+  let swimStreak = 0;
+  for (let i = planOf(0) > 0 && complete(0) ? 0 : 1; i < 520; i++) { if (planOf(i) === 0) continue; if (!complete(i)) break; swimStreak++; }
   let swimBest = 0, cur = 0;
   const firstSwim = E.filter(e => e.type === "natation").map(e => e.date).sort()[0];
-  if (firstSwim) for (let m = monday(parseISO(firstSwim)); m <= monNow; m = addDays(m, 7)) { cur = (wk[toISO(m)]?.swims || 0) >= 2 ? cur + 1 : 0; swimBest = Math.max(swimBest, cur); }
-  const swims8 = Array.from({ length: 8 }, (_, j) => wkOf(7 - j).swims);
-  // assiduité : nages faites / nages prévues, depuis la première activité notée (8 semaines max)
+  if (firstSwim) for (let m = monday(parseISO(firstSwim)); m <= monNow; m = addDays(m, 7)) { const p = nagesPrevues(m); if (!p) continue; cur = (wk[toISO(m)]?.swims || 0) >= p ? cur + 1 : 0; swimBest = Math.max(swimBest, cur); }
+  const swims8 = Array.from({ length: 8 }, (_, j) => { const m = addDays(monNow, -7 * (7 - j)); return { n: wkOf(7 - j).swims, p: nagesPrevues(m), vac: vacance(toISO(m)) || vacance(toISO(addDays(m, 3))) }; });
+  // assiduité : nages faites / nages prévues (vacances exclues), depuis la première activité notée (8 semaines max)
   const firstAny = E.map(e => e.date).sort()[0];
   const startJ = firstAny ? Math.max(0, 7 - Math.round((monNow - monday(parseISO(firstAny))) / 6048e5)) : 8;
   let done8 = 0, plan8 = 0;
   for (let j = startJ; j < 8; j++) {
-    const prevues = j < 7 ? 2 : SEMAINE.slice(0, dayIdx(today) + 1).filter(x => x.prevu.includes("natation")).length;
-    const fait = Math.min(2, swims8[j]); plan8 += Math.max(prevues, fait); done8 += fait;
+    const prevues = j < 7 ? swims8[j].p : nagesPrevues(monNow, dayIdx(today));
+    const fait = Math.min(2, swims8[j].n); plan8 += Math.max(prevues, fait); done8 += fait;
   }
   const swimList = E.filter(e => e.type === "natation");
   const swimKm = swimList.reduce((a, e) => a + (num(e.distance) || 0), 0);
@@ -1194,60 +1230,133 @@ function stats() {
   return {
     streak, doneToday, best: Math.max(streak, runs(rDays)), nRenfo: renfo.length, nLongue: E.filter(e => e.type === "longue").length,
     bestWeek: Math.max(0, ...Object.values(wk).map(o => o.rDays.size)), ab: Object.values(wk).some(o => o.vars.has("courte") && o.vars.has("courte_b")),
-    swimStreak, swimBest: Math.max(swimBest, swimStreak), swims8, swimRate: plan8 > 0 ? Math.min(100, Math.round(100 * done8 / plan8)) : 0,
+    swimStreak, swimBest: Math.max(swimBest, swimStreak), swims8, swimRate: plan8 > 0 ? Math.min(100, Math.round(100 * done8 / plan8)) : null, swimPlanWeek: planOf(0),
     nSwim: swimList.length, swimKm, swimMonthKm, swimWeek: wkOf(0).swims,
   };
 }
+// Médailles : forme par famille, métal par palier (1 bronze, 2 argent, 3 or), couleur de face [clair, base, sombre]
 const BADGES = [
-  { id: "r1", e: "🌱", n: "Premier pas", d: "Première séance de renfo", v: s => s.nRenfo, g: 1 },
-  { id: "s3", e: "🔥", n: "Trois de suite", d: "3 jours de renfo consécutifs", v: s => s.best, g: 3 },
-  { id: "s5", e: "⚡", n: "Cinq de suite", d: "5 jours consécutifs", v: s => s.best, g: 5 },
-  { id: "s7", e: "🏅", n: "Semaine pleine", d: "7 jours consécutifs", v: s => s.best, g: 7 },
-  { id: "s14", e: "🥈", n: "Quinzaine", d: "14 jours consécutifs", v: s => s.best, g: 14 },
-  { id: "s30", e: "🏆", n: "Un mois", d: "30 jours consécutifs", v: s => s.best, g: 30 },
-  { id: "w5", e: "📅", n: "Semaine régulière", d: "5 jours de renfo dans la même semaine", v: s => s.bestWeek, g: 5 },
-  { id: "ab", e: "🔄", n: "Dos et jambes", d: "Courte A et courte B dans la même semaine", v: s => +s.ab, g: 1 },
-  { id: "l10", e: "🧱", n: "Fondations", d: "10 séances longues", v: s => s.nLongue, g: 10 },
-  { id: "r25", e: "🎯", n: "25 séances", d: "25 séances de renfo", v: s => s.nRenfo, g: 25 },
-  { id: "r100", e: "💯", n: "Centurion", d: "100 séances de renfo", v: s => s.nRenfo, g: 100 },
-  { id: "n1", e: "🏊", n: "À l'eau", d: "Première nage notée", v: s => s.nSwim, g: 1 },
-  { id: "n4", e: "🌊", n: "Un mois au bassin", d: "4 semaines de suite avec 2 nages", v: s => s.swimBest, g: 4 },
-  { id: "n12", e: "🐬", n: "Trimestre aquatique", d: "12 semaines de suite avec 2 nages", v: s => s.swimBest, g: 12 },
-  { id: "k10", e: "🗺️", n: "10 km nagés", d: "Distance cumulée", v: s => s.swimKm, g: 10 },
-  { id: "k50", e: "🌍", n: "50 km nagés", d: "Distance cumulée", v: s => s.swimKm, g: 50 },
+  { id: "r1", n: "Premier pas", d: "Première séance de renfo", v: s => s.nRenfo, g: 1, shape: "circle", tier: 1, col: ["#CFF8AE", "#3DBE5C", "#0D5229"], ic: "sprout" },
+  { id: "s3", n: "Trois de suite", d: "3 jours de renfo consécutifs", v: s => s.best, g: 3, shape: "hex", tier: 1, col: ["#FFDDA6", "#FF8A1F", "#943300"], num: 3, unit: "JOURS", ic: "flame" },
+  { id: "s5", n: "Cinq de suite", d: "5 jours consécutifs", v: s => s.best, g: 5, shape: "hex", tier: 2, col: ["#FFB9A6", "#FF4F38", "#8A120A"], num: 5, unit: "JOURS", ic: "flame" },
+  { id: "s7", n: "Semaine pleine", d: "7 jours consécutifs", v: s => s.best, g: 7, shape: "hex", tier: 2, col: ["#FFB6DC", "#EE3A8F", "#760C42"], num: 7, unit: "JOURS", ic: "flame" },
+  { id: "s14", n: "Quinzaine", d: "14 jours consécutifs", v: s => s.best, g: 14, shape: "hex", tier: 3, col: ["#E0C8FF", "#8F4FF2", "#3A1282"], num: 14, unit: "JOURS", ic: "flame" },
+  { id: "s30", n: "Un mois", d: "30 jours consécutifs", v: s => s.best, g: 30, shape: "hex", tier: 3, col: ["#FFF2B0", "#F2B019", "#784900"], num: 30, unit: "JOURS", ic: "flame" },
+  { id: "w5", n: "Semaine régulière", d: "5 jours de renfo dans la même semaine", v: s => s.bestWeek, g: 5, shape: "oct", tier: 2, col: ["#BCE0FF", "#2F86EE", "#0A367A"], num: 5, unit: "SEMAINE", ic: "cal" },
+  { id: "ab", n: "Dos et jambes", d: "Courte A et courte B dans la même semaine", v: s => +s.ab, g: 1, shape: "oct", tier: 1, col: ["#AEF8E8", "#13B49B", "#044F44"], num: "A+B", unit: "SEMAINE", ic: "dumbbell" },
+  { id: "l10", n: "Fondations", d: "10 séances longues", v: s => s.nLongue, g: 10, shape: "square", tier: 2, col: ["#EADFCC", "#9A8264", "#3B2E1C"], num: 10, unit: "LONGUES", ic: "bricks" },
+  { id: "r25", n: "25 séances", d: "25 séances de renfo", v: s => s.nRenfo, g: 25, shape: "circle", tier: 2, col: ["#AEEBFF", "#17A3D6", "#054862"], num: 25, unit: "SÉANCES", ic: "dumbbell" },
+  { id: "r100", n: "Centurion", d: "100 séances de renfo", v: s => s.nRenfo, g: 100, shape: "circle", tier: 3, col: ["#FFB0B0", "#D92B3A", "#5E0812"], num: 100, unit: "SÉANCES", ic: "dumbbell" },
+  { id: "n1", n: "À l'eau", d: "Première nage notée", v: s => s.nSwim, g: 1, shape: "shield", tier: 1, col: ["#BDF6FF", "#1FC2E6", "#035F77"], ic: "drop" },
+  { id: "n4", n: "Un mois au bassin", d: "4 semaines de suite avec toutes les nages prévues", v: s => s.swimBest, g: 4, shape: "shield", tier: 2, col: ["#B0D0FF", "#2E78E8", "#0B2E73"], num: 4, unit: "SEM.", ic: "wave" },
+  { id: "n12", n: "Trimestre aquatique", d: "12 semaines de suite avec toutes les nages prévues", v: s => s.swimBest, g: 12, shape: "shield", tier: 3, col: ["#CAC4FF", "#5A4DE0", "#1E1673"], num: 12, unit: "SEM.", ic: "wave" },
+  { id: "k10", n: "10 km nagés", d: "Distance cumulée", v: s => s.swimKm, g: 10, shape: "diamond", tier: 2, col: ["#B4FFF3", "#19C9AF", "#035C53"], num: 10, unit: "KM", ic: "wave" },
+  { id: "k50", n: "50 km nagés", d: "Distance cumulée", v: s => s.swimKm, g: 50, shape: "diamond", tier: 3, col: ["#A2DAFF", "#0A80C4", "#023658"], num: 50, unit: "KM", ic: "wave" },
 ];
+const METAL = { 1: ["#FFE6CC", "#C98A55", "#6E3B1A", "#F3C9A2"], 2: ["#FFFFFF", "#C3CAD4", "#5F6874", "#ECEFF4"], 3: ["#FFF7D4", "#E3B547", "#7E540E", "#FFE59A"] };
+const ICONS = {
+  flame: '<path d="M12 2.2c.9 3.4 4.8 5.4 4.8 10a4.8 4.8 0 0 1-9.6 0c0-2.2 1-3.5 2.2-4.6.2 1.6 1 2.6 2.2 2.9-.6-3.1.1-5.7.4-8.3z"/>',
+  wave: '<path d="M2 9.5c2.5-2.2 4.5-2.2 7 0s4.5 2.2 7 0 4.5-2.2 6 0M2 15.5c2.5-2.2 4.5-2.2 7 0s4.5 2.2 7 0 4.5-2.2 6 0" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>',
+  drop: '<path d="M12 2.2c3.3 4.3 6.6 7.9 6.6 11.7a6.6 6.6 0 0 1-13.2 0c0-3.8 3.3-7.4 6.6-11.7z"/><path d="M9 14.5a3 3 0 0 0 3 3" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="1.6" stroke-linecap="round"/>',
+  sprout: '<path d="M12 21.8v-8.6" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/><path d="M12 13.4c0-4.7 3.2-7.9 8.8-7.9 0 5-3.4 7.9-8.8 7.9zM12 15.6c0-3.7-2.8-6.2-7.6-6.2 0 3.9 2.8 6.2 7.6 6.2z"/>',
+  dumbbell: '<path d="M2.6 10v4M6.2 6.6v10.8M17.8 6.6v10.8M21.4 10v4M6.2 12h11.6" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>',
+  cal: '<rect x="3.2" y="5" width="17.6" height="15.8" rx="3" fill="none" stroke="currentColor" stroke-width="2.3"/><path d="M3.2 10h17.6M8 2.6v4.6M16 2.6v4.6" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/>',
+  bricks: '<rect x="2" y="4" width="9.4" height="4.8" rx="1"/><rect x="12.6" y="4" width="9.4" height="4.8" rx="1"/><rect x="2" y="10" width="4.2" height="4.8" rx="1"/><rect x="7.4" y="10" width="9.2" height="4.8" rx="1"/><rect x="17.8" y="10" width="4.2" height="4.8" rx="1"/><rect x="2" y="16" width="9.4" height="4.8" rx="1"/><rect x="12.6" y="16" width="9.4" height="4.8" rx="1"/>',
+};
+function shapeSVG(kind, r) {
+  const f = n => n.toFixed(2);
+  const poly = (n, rot, R = r) => `<polygon points="${Array.from({ length: n }, (_, k) => { const a = (rot + 360 * k / n) * Math.PI / 180; return `${f(50 + R * Math.cos(a))},${f(50 + R * Math.sin(a))}`; }).join(" ")}"/>`;
+  if (kind === "hex") return poly(6, -90, r * 1.05);
+  if (kind === "oct") return poly(8, -112.5, r * 1.02);
+  if (kind === "diamond") return poly(4, -90, r * 1.2);
+  if (kind === "square") { const h = r * .9; return `<rect x="${f(50 - h)}" y="${f(50 - h)}" width="${f(2 * h)}" height="${f(2 * h)}" rx="${f(r * .3)}"/>`; }
+  if (kind === "shield") { const R = r * 1.04; return `<path d="M50 ${f(50 - R)} L${f(50 + R * .92)} ${f(50 - R * .66)} L${f(50 + R * .88)} ${f(50 + R * .14)} Q${f(50 + R * .7)} ${f(50 + R * .74)} 50 ${f(50 + R)} Q${f(50 - R * .7)} ${f(50 + R * .74)} ${f(50 - R * .88)} ${f(50 + R * .14)} L${f(50 - R * .92)} ${f(50 - R * .66)} Z"/>`; }
+  return `<circle cx="50" cy="50" r="${f(r)}"/>`;
+}
+let medalSeq = 0;
+function medal(m, size = 80, cls = "") {
+  const id = "md" + (++medalSeq), [mL, mM, mD, mH] = METAL[m.tier || 2], [fL, fM, fD] = m.col;
+  const layer = (r, paint, w = 5) => `<g fill="${paint}" stroke="${paint}" stroke-width="${w}" stroke-linejoin="round">${shapeSVG(m.shape, r)}</g>`;
+  const big = m.num != null ? String(m.num) : "";
+  const low = m.shape === "shield" || m.shape === "diamond";
+  const fs = big.length >= 3 ? 24 : big.length === 2 ? 30 : 34;
+  const ny = m.unit ? (low ? 60 : 61) : 64;
+  const glyph = big
+    ? `${m.ic ? `<svg x="40.5" y="${low ? 19 : 17}" width="19" height="19" viewBox="0 0 24 24" fill="currentColor">${ICONS[m.ic]}</svg>` : ""}
+       <text x="50" y="${ny}" text-anchor="middle" font-family="Sora, system-ui, sans-serif" font-weight="800" font-size="${fs}" letter-spacing="-.5">${esc(big)}</text>
+       ${m.unit ? `<text x="50" y="${low ? 71 : 73}" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-weight="700" font-size="${m.unit.length > 6 ? 6.6 : 7.4}" letter-spacing="1.1">${m.unit}</text>` : ""}`
+    : `<svg x="28" y="${low ? 26 : 28}" width="44" height="44" viewBox="0 0 24 24" fill="currentColor">${ICONS[m.ic]}</svg>`;
+  return `<svg class="medal ${cls}" width="${size}" height="${size}" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="${id}r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${mL}"/><stop offset=".42" stop-color="${mM}"/><stop offset=".7" stop-color="${mH}"/><stop offset="1" stop-color="${mD}"/></linearGradient>
+      <linearGradient id="${id}b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${mD}"/><stop offset=".5" stop-color="${mM}"/><stop offset="1" stop-color="${mL}"/></linearGradient>
+      <radialGradient id="${id}f" cx=".36" cy=".26" r=".9"><stop offset="0" stop-color="${fL}"/><stop offset=".5" stop-color="${fM}"/><stop offset="1" stop-color="${fD}"/></radialGradient>
+      <linearGradient id="${id}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".6"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      <clipPath id="${id}c">${shapeSVG(m.shape, 37)}</clipPath>
+      <filter id="${id}s" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="1.3" stdDeviation="1" flood-color="${fD}" flood-opacity=".95"/></filter>
+    </defs>
+    ${layer(42.5, `url(#${id}r)`)}
+    ${layer(38, `url(#${id}b)`, 3)}
+    ${layer(35.5, `url(#${id}f)`)}
+    <g clip-path="url(#${id}c)"><ellipse cx="44" cy="22" rx="46" ry="25" fill="url(#${id}g)"/></g>
+    <g fill="#fff" color="#fff" filter="url(#${id}s)">${glyph}</g>
+  </svg>`;
+}
 const earned = s => BADGES.filter(b => b.v(s) >= b.g).map(b => b.id);
+const progText = (b, v) => `${b.id[0] === "k" ? fr(Math.min(v, b.g).toFixed(1)) : Math.min(Math.floor(v), b.g)} / ${b.g}${b.id[0] === "k" ? " km" : ""}`;
 async function saveEntry(entry, msg) {
   const before = new Set(earned(stats()));
   const ok = await Store.addEntry(entry);
   if (ok) {
     const nouveaux = BADGES.filter(b => b.v(stats()) >= b.g && !before.has(b.id));
-    toast(nouveaux.length ? `${msg} · Nouveau badge : ${nouveaux.map(b => b.e + " " + b.n).join(", ")}` : msg);
+    toast(msg);
+    if (nouveaux.length) setTimeout(() => showBadges(nouveaux.map(b => b.id), true), 350);
   }
   return ok;
 }
+function fanfare() {
+  if (!Store.settings.sons) return;
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume && audio.resume(); } catch (e) { return; }
+  [523, 659, 784, 1047].forEach((f, k) => setTimeout(() => beep(f, k === 3 ? .4 : .12), 700 + k * 120));
+}
+function showBadges(ids, isNew = false) {
+  const list = ids.map(id => BADGES.find(b => b.id === id)).filter(Boolean); if (!list.length) return;
+  const b = list[0], v = b.v(stats()), got = v >= b.g;
+  $("#mpK").textContent = isNew ? (list.length > 1 ? `${list.length} nouveaux badges` : "Nouveau badge") : (got ? "Badge obtenu" : "Badge à gagner");
+  $("#mpM").innerHTML = medal(b, 196, got ? "" : "lock");
+  $("#mpT").textContent = b.n; $("#mpD").textContent = b.d;
+  $("#mpX").innerHTML = got
+    ? (list.length > 1 ? `<div class="mp-more">${list.slice(1).map(x => `<span>${medal(x, 60)}${esc(x.n)}</span>`).join("")}</div>` : "")
+    : `<div class="meter"><span style="width:${Math.min(100, v / b.g * 100).toFixed(0)}%"></span></div><p>${progText(b, v)}</p>`;
+  $("#medalPop").hidden = false; $("#mpClose").focus();
+  if (isNew) fanfare();
+}
+function closeBadges() { $("#medalPop").hidden = true; }
+const STREAK_COL = ["#FFDDA6", "#FF8A1F", "#943300"];
 function streakCard(s) {
   const msg = s.doneToday ? "Séance du jour faite, série prolongée." : s.streak ? `Fais ta séance aujourd'hui pour passer à ${s.streak + 1} jours.` : "Une séance aujourd'hui lance une nouvelle série.";
   const nxt = BADGES.filter(b => b.id[0] === "s" && b.g > s.best)[0];
-  return `<section class="card streak"><span style="font-size:2rem" aria-hidden="true">🔥</span>
-    <div><span class="big">${s.streak}<small> ${s.streak > 1 ? "jours" : "jour"} de renfo de suite</small></span><p class="muted" style="font-size:.88rem;margin-top:4px">${msg}${nxt ? ` Prochain badge : ${nxt.e} ${nxt.n} (${nxt.g} jours).` : ""} Record : ${s.best} j.</p></div></section>`;
+  const m = medal({ shape: "hex", tier: s.streak >= 14 ? 3 : s.streak >= 5 ? 2 : 1, col: STREAK_COL, num: s.streak, unit: s.streak > 1 ? "JOURS" : "JOUR", ic: "flame" }, 64, s.streak ? "" : "lock");
+  return `<section class="card streak">${m}
+    <div><span class="big">${s.streak}<small> ${s.streak > 1 ? "jours" : "jour"} de renfo de suite</small></span><p class="muted" style="font-size:.88rem;margin-top:4px">${msg}${nxt ? ` Prochain badge : ${nxt.n} (${nxt.g} jours).` : ""} Record : ${s.best} j.</p></div></section>`;
 }
 function badgesHTML(s) {
   return `<div class="badges">${BADGES.map(b => { const v = b.v(s), got = v >= b.g, pct = Math.min(100, v / b.g * 100);
-    return `<div class="badge ${got ? "got" : "lock"}" title="${esc(b.d)}"><span class="e" aria-hidden="true">${b.e}</span><b>${b.n}</b><span class="d">${b.d}</span>${got ? "" : `<div class="meter"><span style="width:${pct.toFixed(0)}%"></span></div><span class="d">${b.id[0] === "k" ? fr(v.toFixed(1)) : Math.floor(v)} / ${b.g}</span>`}</div>`; }).join("")}</div>`;
+    return `<button class="badge ${got ? "got" : "lock"}" data-badge="${b.id}" aria-label="${esc(b.n)} : ${got ? "obtenu" : "à gagner, " + progText(b, v)}">${medal(b, 78, got ? "" : "lock")}<b>${b.n}</b>${got ? `<span class="d">${b.d}</span>` : `<div class="meter"><span style="width:${pct.toFixed(0)}%"></span></div><span class="d">${progText(b, v)}</span>`}</button>`; }).join("")}</div>`;
 }
 function swimHTML(s) {
   const mon = monday(new Date());
-  const weeks = s.swims8.map((n, j) => { const m = addDays(mon, -7 * (7 - j)); return `<div><span class="dots">${[0, 1].map(k => `<i class="${n > k ? "on" : ""}"></i>`).join("")}</span>${m.getDate()}/${m.getMonth() + 1}</div>`; }).join("");
+  const weeks = s.swims8.map((w, j) => { const m = addDays(mon, -7 * (7 - j)); return `<div class="${w.p ? "" : "vac"}" title="${w.vac ? "Vacances " + w.vac : ""}"><span class="dots">${[0, 1].map(k => `<i class="${w.n > k ? "on" : k >= w.p ? "off" : ""}"></i>`).join("")}</span>${w.p ? `${m.getDate()}/${m.getMonth() + 1}` : "vac."}</div>`; }).join("");
+  const vacNow = vacance(toISO(new Date()));
   return `<section class="card" style="display:grid;gap:12px">
     <div class="row-between"><h2>Assiduité natation</h2><button class="btn sm" data-log="natation">+ Noter une nage</button></div>
     <div class="tiles">
       <div class="tile" style="--c:var(--natation)"><span class="l">Semaines complètes de suite (2 nages)</span><span class="v">${s.swimStreak}<small> sem.</small></span><span class="l">Record : ${s.swimBest}</span></div>
-      <div class="tile" style="--c:var(--natation)"><span class="l">Assiduité sur 8 semaines</span><span class="v">${s.swimRate}<small> %</small></span><div class="meter"><span style="width:${s.swimRate}%"></span></div></div>
+      <div class="tile" style="--c:var(--natation)"><span class="l">Assiduité sur 8 semaines</span><span class="v">${s.swimRate == null ? "–" : s.swimRate}<small> %</small></span><div class="meter"><span style="width:${s.swimRate || 0}%"></span></div>${vacNow ? `<span class="l">Vacances ${vacNow} : en pause</span>` : ""}</div>
       <div class="tile" style="--c:var(--natation)"><span class="l">Nagé ce mois-ci</span><span class="v">${fr((s.swimMonthKm).toFixed(1))}<small> km</small></span><span class="l">Total : ${fr(s.swimKm.toFixed(1))} km en ${s.nSwim} nage${s.nSwim > 1 ? "s" : ""}</span></div>
     </div>
     <div class="swimweeks" aria-label="Nages des 8 dernières semaines">${weeks}</div>
-    <p class="muted" style="font-size:.82rem">Une pastille pleine par nage, objectif deux par semaine (lundi et jeudi). Semaines repérées par leur lundi.</p>
+    <p class="muted" style="font-size:.82rem">Une pastille pleine par nage, objectif deux par semaine (lundi et jeudi). Pendant les petites vacances scolaires de la zone B, il n'y a pas de séance : ces semaines (« vac. ») ne comptent ni dans l'assiduité ni dans la série.</p>
   </section>`;
 }
 function renderSuivi() {
@@ -1271,7 +1380,7 @@ function renderSuivi() {
     for (let i = 0; i < 7; i++) {
       const dIso = toISO(addDays(m, i));
       const types = [...new Set(entriesOn(dIso).map(e => e.type))];
-      grid += `<div class="c${dIso > todayIso ? " fut" : ""}" title="${dIso}">${types.map(t => `<span class="dot" style="--c:${TYPES[t].c}"></span>`).join("")}</div>`;
+      grid += `<div class="c${dIso > todayIso ? " fut" : ""}${vacance(dIso) ? " vac" : ""}" title="${dIso}${vacance(dIso) ? " · vacances " + vacance(dIso) : ""}">${types.map(t => `<span class="dot" style="--c:${TYPES[t].c}"></span>`).join("")}</div>`;
     }
   }
 
@@ -1292,7 +1401,7 @@ function renderSuivi() {
   $("#v-suivi").innerHTML = `
     <div class="row-between"><h1>Suivi</h1><button class="btn sm" data-log="course">+ Noter une activité</button></div>
     <div class="tiles">
-      ${tile("courte", count("courte"), 5)}${tile("longue", count("longue"), 2)}${tile("natation", count("natation"), 2)}${tile("course", count("course"), 3)}
+      ${tile("courte", count("courte"), 5)}${tile("longue", count("longue"), 2)}${st.swimPlanWeek ? tile("natation", count("natation"), st.swimPlanWeek) : `<div class="tile" style="--c:var(--natation)"><span class="l">Natation cette semaine</span><span class="v">${count("natation")}<small> · vacances</small></span><span class="l">Pas de séance prévue</span></div>`}${tile("course", count("course"), 3)}
       <div class="tile"><span class="l">Douleur moyenne, 14 derniers jours</span><span class="v">${p14 == null ? "–" : fr(p14.toFixed(1))}<small> /10</small></span><span class="l">${delta}</span></div>
     </div>
     ${streakCard(st)}
@@ -1300,7 +1409,7 @@ function renderSuivi() {
       <p class="muted" style="font-size:.82rem">Un badge gagné reste acquis. Une douleur au-delà de 3/10 passe avant la série : un jour de repos ne t'enlève rien.</p></section>
     ${swimHTML(st)}
     <section class="card" style="display:grid;gap:12px"><h2>8 dernières semaines</h2><div class="scroll-x"><div class="grid8">${grid}</div></div>
-      <div class="legend">${Object.keys(TYPES).map(t => `<span><span class="dot" style="--c:${TYPES[t].c}"></span>${TYPES[t].court}</span>`).join("")}</div></section>
+      <div class="legend">${Object.keys(TYPES).map(t => `<span><span class="dot" style="--c:${TYPES[t].c}"></span>${TYPES[t].court}</span>`).join("")}<span><span class="vacsw"></span>Petites vacances (zone B)</span></div></section>
     <section class="card chart" style="display:grid;gap:12px"><div class="row-between"><h2>Douleur lombaire</h2><div class="legend"><span><span class="dot" style="--c:var(--accent)"></span>après</span><span><span class="dot plan" style="--c:var(--muted)"></span>avant la séance</span></div></div>${painChart()}</section>
     <section style="display:grid;gap:12px"><h2>Journal</h2><div class="journal">${journal}</div></section>`;
 }
@@ -1396,9 +1505,9 @@ function spineSVG(side) {
   pts.forEach((p, i) => {
     const a = pts[Math.max(0, i - 1)], b = pts[Math.min(16, i + 1)];
     const ang = Math.atan2(b.x - a.x, b.y - a.y) * -180 / Math.PI;
-    const isL4 = false, lumb = i >= 12;
+    const lumb = i >= 12;
     const w = lumb ? 30 : 22 + i * .6;
-    s += `<rect x="${(p.x - w / 2).toFixed(1)}" y="${(p.y - 6).toFixed(1)}" width="${w.toFixed(1)}" height="12" rx="4" transform="rotate(${(ang + (isL4 ? -dir * 10 : 0)).toFixed(1)} ${p.x.toFixed(1)} ${p.y.toFixed(1)})" fill="${isL4 ? "var(--accent)" : "var(--surface-2)"}" stroke="${isL4 ? "var(--accent)" : "var(--muted)"}" stroke-width="1"/>`;
+    s += `<rect x="${(p.x - w / 2).toFixed(1)}" y="${(p.y - 6).toFixed(1)}" width="${w.toFixed(1)}" height="12" rx="4" transform="rotate(${ang.toFixed(1)} ${p.x.toFixed(1)} ${p.y.toFixed(1)})" fill="var(--surface-2)" stroke="var(--muted)" stroke-width="1"/>`;
   });
   const sac = pts[16];
   s += `<path d="M${sac.x - 20},${sac.y + 12} L${sac.x + 20},${sac.y + 12} L${sac.x},${sac.y + 46} Z" fill="var(--surface-2)" stroke="var(--muted)"/>`;
@@ -1406,7 +1515,7 @@ function spineSVG(side) {
   s += `<text x="8" y="40" font-size="11" fill="var(--muted)">G</text><text x="192" y="40" text-anchor="end" font-size="11" fill="var(--muted)">D</text>`;
   if (dir) {
     const lm = pts[14];
-    s += `<text x="${dir > 0 ? 192 : 8}" y="${lm.y + 4}" text-anchor="${dir > 0 ? "end" : "start"}" font-size="11" fill="var(--ink)">50°</text>`;
+    s += `<text x="${dir > 0 ? 192 : 8}" y="${lm.y + 4}" text-anchor="${dir > 0 ? "end" : "start"}" font-size="11" fill="var(--ink)">convexité</text>`;
   }
   return `<svg viewBox="0 0 200 360" role="img" aria-label="Schéma de colonne, vue de dos">${s}</svg>`;
 }
@@ -1441,8 +1550,11 @@ function renderAll() { renderToday(); renderSuivi(); renderLib(); renderSettings
 
 /* Délégation des événements des vues */
 document.addEventListener("click", ev => {
+  if (ev.target.id === "medalPop") { closeBadges(); return; }
   const t = ev.target.closest("button, a"); if (!t) return;
-  if (t.dataset.start) openPlayer(t.dataset.start);
+  if (t.id === "mpClose") closeBadges();
+  else if (t.dataset.badge) showBadges([t.dataset.badge]);
+  else if (t.dataset.start) openPlayer(t.dataset.start);
   else if (t.dataset.log) openLog(t.dataset.log);
   else if (t.dataset.goto) {
     const card = document.getElementById("ex-" + t.dataset.goto);
@@ -1490,6 +1602,7 @@ async function importData(file) {
   } catch (e) { toast("Fichier non reconnu"); }
 }
 document.addEventListener("click", e => { if (e.target.id === "dataExport") exportData(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#medalPop").hidden) closeBadges(); });
 
 /* ------------------------------------------------------------------ */
 /* Saisie rapide                                                       */
